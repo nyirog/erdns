@@ -26,12 +26,24 @@ start_link() ->
 %% Supervisor callbacks
 %%====================================================================
 
-%% Child :: #{id => Id, start => {M, F, A}}
-%% Optional keys are restart, shutdown, type, modules.
-%% Before OTP 18 tuples must be used to specify a child. e.g.
-%% Child :: {Id,StartFunc,Restart,Shutdown,Type,Modules}
-init([]) ->
-    {ok, { {one_for_all, 0, 1}, []} }.
+init([]) -> {
+    ok,
+    {
+        #{
+            strategy => one_for_all,
+            intensity => 1,
+            period => 5
+        },
+        [#{
+            id => server,
+            start => {erdns_server, start_link, []},
+            restart => permanent,
+            shutdown => 5000,
+            type => worker,
+            modules => [erdns_server]
+        }]
+    }
+}.
 
 %%====================================================================
 %% Internal functions
