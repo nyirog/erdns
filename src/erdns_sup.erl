@@ -34,14 +34,7 @@ init([]) -> {
             intensity => 1,
             period => 5
         },
-        [#{
-            id => server,
-            start => {erdns_server, start_link, []},
-            restart => permanent,
-            shutdown => 5000,
-            type => worker,
-            modules => [erdns_server]
-        }]
+        []
     }
 }.
 
