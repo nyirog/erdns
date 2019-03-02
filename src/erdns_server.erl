@@ -8,6 +8,7 @@
 -behaviour(gen_server).
 
 -include_lib("kernel/src/inet_dns.hrl").
+-include_lib("rfc4627_jsonrpc/include/rfc4627_jsonrpc.hrl").
 
 -record(lookup, {address = {0,0,0,0}, name = "", ttl = 0, expiration = 0}).
 
@@ -22,7 +23,28 @@
 %%==============================================================================
 
 start_link() ->
-    gen_server:start_link({local, ?MODULE}, ?MODULE, init_state(), []).
+    {ok, Pid} = gen_server:start_link({local, ?MODULE}, ?MODULE, init_state(), []),
+    rfc4627_jsonrpc:register_service(
+           Pid,
+           rfc4627_jsonrpc:service(
+               <<"test">>,
+               <<"urn:uuid:afe1b4b5-23b0-4964-a74a-9168535c96b2">>,
+               <<"1.0">>,
+               [
+                   #service_proc{
+                       name = <<"test_proc">>,
+                       idempotent = true,
+                       params = [
+                           #service_proc_param{
+                               name = <<"value">>,
+                               type = <<"str">>
+                           }
+                       ]
+                   }
+               ]
+           )
+    ),
+    {ok, Pid}.
 
 stop() -> gen_server:call(?MODULE, stop).
 
@@ -54,6 +76,8 @@ handle_call(
                 State#{addresses := Addresses#{Address => Lookup}}
             }
     end;
+handle_call({jsonrpc, <<"test_proc">>, _RequestInfo, [Value]}, _From, State) ->
+    {reply, {result, <<"ErlangServer: ", Value/binary>>}, State};
 handle_call(_Request, _From, State) -> {noreply, State}.
 
 handle_cast(_Event, State) -> {noreply, State}.
