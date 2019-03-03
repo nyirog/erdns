@@ -36,7 +36,26 @@ handle(<<"rdns">>, [Address]) ->
     {ok, Ip} = inet:parse_address(erlang:binary_to_list(Address)),
     case inet_res:resolve(Ip, in, ptr) of
         {ok, #dns_rec{anlist = [Answer]}} ->
-            erlang:list_to_binary(Answer#dns_rr.data);
+            #{
+                address => erlang:list_to_binary(Answer#dns_rr.data),
+                ttl => Answer#dns_rr.ttl
+            };
+        {error, _} ->
+            throw(internal_error)
+    end;
+handle(<<"rdns">>, [Address, NameServers]) ->
+    Parse = fun (NameServer) ->
+        {ok, Ip} = inet:parse_address(erlang:binary_to_list(NameServer)),
+        {Ip, 53}
+    end,
+    NameServersWithIp = lists:map(Parse, NameServers),
+    {ok, Ip} = inet:parse_address(erlang:binary_to_list(Address)),
+    case inet_res:resolve(Ip, in, ptr, [{nameservers, NameServersWithIp}]) of
+        {ok, #dns_rec{anlist = [Answer]}} ->
+            #{
+                address => erlang:list_to_binary(Answer#dns_rr.data),
+                ttl => Answer#dns_rr.ttl
+            };
         {error, _} ->
             throw(internal_error)
     end;
