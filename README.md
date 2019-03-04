@@ -2,7 +2,7 @@ erdns
 =====
 
 erdns is a simple json-rpc service which resolves the dns name of an ip with
-inet_res:resolve(<IP>, in, ptr) function.
+inet_res:resolve(_IP_, in, ptr) function.
 
 The service is listening on the 8080 port by default.
 
